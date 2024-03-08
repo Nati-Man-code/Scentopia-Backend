@@ -1,12 +1,11 @@
 
 // module and dependencies
-const app = express();
-const db = require('../config/mongoose');
-const verify = require('../Middleware/verifyToken');
-const asyncHandler = require('../Middleware/asyncHandler.js');
 const express = require('express');
+const app = express();
+const db = require('../Config/Database.js');
+const asyncHandler = require('../Middleware/asyncHandler.js');
 const mongoose = require('mongoose');
-const Discount = require('../models/Discount');
+const Discount = require('../Model/Discount');
 const { body } = require('express-validator');
 
 // Get all discounts

@@ -3,7 +3,7 @@
 //Import module and dependencies 
 const express = require('express');
 const mongoose = require('mongoose');
-const Wishlist = require('../models/Wishlist');
+const Wishlist = require('../Model/Wishlist');
 const { body } = require('express-validator');
 
 // Create Wishlist

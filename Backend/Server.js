@@ -22,6 +22,11 @@ const paymentRoutes = require('./Routes/paymentRoutes');
 const orderRoutes = require('./Routes/orderRoutes');
 const productRoutes = require('./Routes/productRoutes');
 const categoryRoutes = require('./Routes/categoryRoutes');
+const cartRoutes = require('./Routes/CartRoutes');
+const discount = require('./Routes/DiscountRoutes');
+const wishlist = require('./Routes/WishlistRoutes')
+const recommendations = require('./Routes/recommendationsRoutes');
+const review = require('./Routes/reviewRoutes');
 
 // Initialize Express app
 const app = express();
@@ -45,17 +50,16 @@ app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x
 app.use(cookieParser());
 
 // Define routes
-const routes = [
-    { path: '/api/users', route: userRoutes },
-    { path: '/api/payment', route: paymentRoutes },
-    { path: '/api/orders', route: orderRoutes },
-    { path: '/api/products', route: productRoutes },
-    { path: '/api/categories', route: categoryRoutes },
-];
-
-routes.forEach(({ path, route }) => {
-    app.use(path, route);
-});
+app.use('/api/users', userRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/discount' ,discount);
+app.use('./api/wishlist', wishlist);
+app.use('./api/recommendations', recommendations);
+app.use('./api/review', review);
 
 // Create a simple HTTP server
 const server = http.createServer((req, res) => {

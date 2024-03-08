@@ -3,11 +3,11 @@
 //Import module and dependencies 
 const express = require('express');
 const mongoose = require('mongoose');
-const Recommendation = require('../models/Recommendation');
-const { body } = require('express-validator');
+const Recommendation = require('../Model/Recommendation');
+const { body, sanitizeBody, validationResult } = require('express-validator');
 
 //Get all Recommendations
-exports.getAllRecommendations = async (req, res) => {
+const getAllRecommendations = async (req, res) => {
     try {
         const recommendations = await Recommendation.find();
         res.status(200).json(recommendations);
@@ -33,21 +33,20 @@ const getRecommendationById = async (req, res) => {
 };
 
 //Create Recommendation for selected perfume
-exports.createRecommendation = [
+const createRecommendation = [
     //Validate data
     body('recommendationText', 'Recommendation text must not be empty.').trim().isLength({ min: 1 }),
 
-    //Sanitize data
-    sanitizeBody('recommendationText').escape(),
 
     //Process request after validation and sanitization
     async (req, res) => {
         //Extract the validation errors from a request
         const errors = validationResult(req);
-
+        // Manually sanitize the recommendationText
+        const sanitizedRecommendationText = req.body.recommendationText.replace(/<[^>]*>?/gm, '');
         //Create a new recommendation
         const recommendation = new Recommendation({
-            recommendationText: req.body.recommendationText,
+            recommendationText: sanitizedRecommendationText,
             perfume: req.params.perfumeId
         });
 
@@ -73,7 +72,13 @@ exports.createRecommendation = [
     }
 ];
 
-
+const sanitizedBody = (req, res, next) => {
+    if(req.body.recommendationText) {
+        // Example of additional sanitization: removing all digits
+        req.body.recommendationText = req.body.recommendationText.replace(/\d+/g, '');
+    }
+    next();
+};
 //Update Recommendation
 const updateRecommendation = async (req, res) => {
     const { id } = req.params;
@@ -95,7 +100,7 @@ const updateRecommendation = async (req, res) => {
 
 
 //Delete Recommendations for Selected Above
-const deleteRecommendationsForSelectedAbove = async (req, res) => {
+const deleteRecommendation = async (req, res) => {
     const { id } = req.params;
     try {
         let perfume = await Perfume.findById(id);

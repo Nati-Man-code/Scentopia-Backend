@@ -5,10 +5,10 @@ const Order = require('../Model/Order');
 const router = express.Router();
 
 //RESTful routes for Orders
-router.get('/', getAllOrders);
-router.get('/:id', getOrderById);
-router.put('/:id', updateOrderById);
-router.delete('/:id', deleteOrderById);
+router.route('/getAllOrders').get(getAllOrders);
+router.route('/getOrderById/:id').get(getOrderById);
+router.route('/updateOrderById/:id').put(updateOrderById);
+router.route('/deleteOrderById/:id').delete(deleteOrderById);
 
 
 

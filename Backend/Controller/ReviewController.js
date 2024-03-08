@@ -3,8 +3,10 @@
 // Import module and dependencies
 const express = require('express');
 const mongoose = require('mongoose');
-const Review = require('../models/Review');
-const { body } = require('express-validator');
+const Review = require('../Model/Review');
+const { body, validationResult } = require('express-validator')
+const { escape } = require('validator');
+
 
 // Get all reviews
 const getAllReviews = async (req, res) => {
@@ -39,9 +41,9 @@ const createReview = [
     body('description').trim().isLength({ min: 20 }).withMessage('Description must be at least 20 characters long'),
     body('rating').isNumeric().withMessage('Rating must be a number'),
 
-    // Sanitize data
-    sanitizeBody('title').escape(),
-    sanitizeBody('description').escape(),
+     // Sanitize data
+     body('*').escape(),
+
 
     // Process request after validation and sanitization
     async (req, res) => {

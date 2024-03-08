@@ -1,31 +1,29 @@
 const express = require('express');
 const router = express.Router();
+const {
+  getAllReviews,
+  getReviewById,
+  createReview,
+  updateReview,
+  deleteReview
+} = require('../Controller/ReviewController');
 
-const { getAllReviews, getReviewById, createReview, updateReview, deleteReview } = require('../controllers/ReviewController');
+// Middleware for validation and sanitization
+const { body, sanitizeBody, validationResult } = require('express-validator');
 
-// @route   GET api/reviews
-// @desc    Get all reviews
-// @access  Public
-router.get('api/reviews', getAllReviews);
+// Get all reviews
+router.get('/', getAllReviews);
 
-// @route   GET api/reviews/:id
-// @desc    Get a review by its id
-// @access  Public
-router.get('api/reviews/:id', getReviewById);
+// Get a single review by ID
+router.get('/:id', getReviewById);
 
-// @route   POST api/reviews
-// @desc    Create a review
-// @access  Private
-router.post('api/reviews', createReview);
+// Create a new review
+router.post('/', createReview);
 
-// @route   PUT api/reviews/:id
-// @desc    Update a review
-// @access  Private
-router.put('api/reviews/:id', updateReview);
+// Update a review by ID
+router.patch('/:id', updateReview);
 
-// @route   DELETE api/reviews/:id
-// @desc    Delete a review
-// @access  Private
-router.delete('api/reviews/:id', deleteReview);
+// Delete a review by ID
+router.delete('/:id', deleteReview);
 
 module.exports = router;
