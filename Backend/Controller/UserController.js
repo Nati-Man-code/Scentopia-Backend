@@ -10,6 +10,7 @@ const asyncHandler = require('../Middleware/asyncHandler.js');
 const nodemailer = require('nodemailer');
 const User = require('../Model/User');
 const crypto = require('crypto');
+const data = require("../Utils/Data.js");
 
 exports.registerUser = async (req, res) => {
     try {
