@@ -40,7 +40,7 @@ app.use(morgan('combined'));
 app.use(compression());
 app.use(session({
     secret: sessionSecret,
-    cookie: { secure: false, httpOnly: true },
+    cookie: { secure: false, httpOnly: false },
     saveUninitialized: false,
     resave: false, 
 }));
@@ -50,24 +50,25 @@ app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x
 app.use(cookieParser());
 
 // Define routes
-app.use('/api/users', userRoutes);
-app.use('/api/payment', paymentRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/discount' ,discount);
-app.use('./api/wishlist', wishlist);
-app.use('./api/recommendations', recommendations);
-app.use('./api/review', review);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/categories', categoryRoutes);
+app.use('/api/v1/cart', cartRoutes);
+app.use('/api/v1/discount' ,discount);
+app.use('/api/v1/wishlist', wishlist);
+app.use('/api/v1/recommendations', recommendations);
+app.use('/api/v1/review', review);
 
-// Create a simple HTTP server
-const server = http.createServer((req, res) => {
-  res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('Hello, world!\n');
+// HTTP Server
+const httpServer = http.createServer((req, res) => {
+  res.writeHead(200, {'Content-Type': 'application/json'});
+  res.end('Hello HTTP!\n');
 });
+
 // Start the server
-const port = process.env.PORT;
-app.listen(port, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
+const httpPort = process.env.PORT;
+httpServer.listen(httpPort, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${httpPort}`);
 });

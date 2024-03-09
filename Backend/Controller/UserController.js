@@ -14,14 +14,14 @@ const data = require("../Utils/Data.js");
 
 exports.registerUser = async (req, res) => {
     try {
-        const { FirstName, LastName, Email, password } = req.body;
+        const { firstName, lastName, email, password } = req.body;
         // Validate user input
         const { error } = validateUserInput(req.body);
         if (error) {
             return res.status(400).json({ error: 'Invalid user input' });
         }
         // Check if user already exists
-        const existingUser = await User.findOne({ email: Email  });
+        const existingUser = await User.findOne({ email: email  });
         if (existingUser) {
             return res.status(400).json({ error: 'User already exists' });
         }
@@ -32,19 +32,19 @@ exports.registerUser = async (req, res) => {
 
         // Create a new user
         const user = new User({
-            firstName: FirstName,
-            lastName:LastName,
-            email: Email,
+            firstName: firstName,
+            lastName:lastName,
+            email: email,
             password: hashedPassword
         });
 
         if (user) {
-            generateToken(res, user._id);
+            generateToken(res, user. id);
         
             res.status(201).json({
-              _id: user._id,
-              firstName: user.FirstName,
-              lastName: user.LastName,
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
               email: user.email,
               isAdmin: user.isAdmin,
             });
@@ -55,7 +55,7 @@ exports.registerUser = async (req, res) => {
     
         try {
             const savedUser = await user.save();
-            const { _id, username } = savedUser;
+            const { id, username } = savedUser;
             const token = generateToken(savedUser); // Function to generate JWT token
             res.status(201).json({ token });     // Send verification email
             await sendEmail(
