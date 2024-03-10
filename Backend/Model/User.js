@@ -1,7 +1,7 @@
 // import the necessary modules
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const data = require("../Utils/Data.js");
 
 const userSchema = new mongoose.Schema({
