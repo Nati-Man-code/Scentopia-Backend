@@ -1,4 +1,5 @@
 const express = require('express');
+const Discount = require('../Model/Discount');
 const router = express.Router();
 const {
   getAllDiscounts,
