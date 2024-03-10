@@ -61,14 +61,10 @@ app.use('/api/v1/wishlist', wishlist);
 app.use('/api/v1/recommendations', recommendations);
 app.use('/api/v1/review', review);
 
-// HTTP Server
-const httpServer = http.createServer((req, res) => {
-  res.writeHead(200, {'Content-Type': 'application/json'});
-  res.end('Hello HTTP!\n');
-});
+
 
 // Start the server
-const httpPort = process.env.PORT;
-httpServer.listen(httpPort, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${httpPort}`);
+const Port = process.env.PORT;
+app.listen(Port, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${Port}`);
 });
