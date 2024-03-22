@@ -40,13 +40,13 @@ app.use(morgan('combined'));
 app.use(compression());
 app.use(session({
     secret: sessionSecret,
-    cookie: { secure: false, httpOnly: false },
+    cookie: { secure: false, httpOnly: true },
     saveUninitialized: false,
     resave: false, 
 }));
 // Parse incoming request bodies
-app.use(bodyParser.json()); // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(express.json()); // for parsing application/json
+app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 app.use(cookieParser());
 
 // Define routes
@@ -61,7 +61,8 @@ app.use('/api/v1/wishlist', wishlist);
 app.use('/api/v1/recommendations', recommendations);
 app.use('/api/v1/review', review);
 
-
+const connectDb = require("./Config/Database.js");
+connectDb();
 
 // Start the server
 const Port = process.env.PORT;

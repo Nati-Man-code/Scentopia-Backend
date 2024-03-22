@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-
-const authMiddleware = async (req, res, next) => {
+const generateToken = require()
+exports.authMiddleware = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         const token = authHeader && authHeader.split(' ')[1];
@@ -24,6 +24,7 @@ const authMiddleware = async (req, res, next) => {
         res.status(401).json({ error: 'Please authenticate' });
     }
 };
+
 
 
 

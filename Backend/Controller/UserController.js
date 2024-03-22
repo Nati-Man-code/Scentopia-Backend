@@ -1,74 +1,103 @@
 //Import module and dependencies
 const express = require('express');
+require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto'); 
 const jwt = require('jsonwebtoken');
-const app = express();
 const Payments = require('../Model/Payment');
 const { body } = require('express-validator');
 const asyncHandler = require('../Middleware/asyncHandler.js'); 
 const nodemailer = require('nodemailer');
 const User = require('../Model/User');
-const crypto = require('crypto');
-const data = require("../Utils/Data.js");
 
-exports.registerUser = async (req, res) => {
+
+  exports.registerUser = async (req, res) => {
     try {
-        const { firstName, lastName, email, password } = req.body;
-        // Validate user input
-        const { error } = validateUserInput(req.body);
-        if (error) {
-            return res.status(400).json({ error: 'Invalid user input' });
-        }
-        // Check if user already exists
-        const existingUser = await User.findOne({ email: email  });
-        if (existingUser) {
-            return res.status(400).json({ error: 'User already exists' });
-        }
-
-        // Hash the password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create a new user
-        const user = new User({
-            firstName: firstName,
-            lastName:lastName,
-            email: email,
-            password: hashedPassword
+      const { firstName, lastName, email, password } = req.body;
+  
+      if (!firstName || !lastName || !email || !password) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+  
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+  
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+  
+      const newUser = new User({
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword
+      });
+      if (newUser) {
+        res.status(201).json({
+          message: "User successfully registered", // Added success message here
+          _id: newUser._id,
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
         });
+      } else {
+          res.status(400).json({ error: "User not created" });
+      }
+      await newUser.save();
 
-        if (user) {
-            generateToken(res, user. id);
-        
-            res.status(201).json({
-              id: user.id,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              email: user.email,
-              isAdmin: user.isAdmin,
-            });
-          } else {
-            res.status(400);
-            throw new Error('Invalid user data');
-          }
-    
-        try {
-            const savedUser = await user.save();
-            const { id, username } = savedUser;
-            const token = generateToken(savedUser); // Function to generate JWT token
-            res.status(201).json({ token });     // Send verification email
-            await sendEmail(
-                user.email,
-                'Verify your email',
-                `Please verify your email by clicking on this link: http://yourwebsite.com/verify?token=${token}`
-            );    } catch (err) {
-            res.status(500).json({ error: 'Failed to save user' });
+
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "An error occurred while processing your request" });
+    }
+  };
+  
+  exports.loginUser = async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: "Missing email or password" });
+      }
+  
+      const user = await User.findOne({ email: email });
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      if (user) {
+      res.status(200).json({
+        message: "Login successful",
+        user: {
+          id: user._id,
+          email: user.email,
+          
         }
-        
-        } catch (err) {
-            console.log(err.message);
-            res.status(400).json({ error: 'An error occurred' });
+      });
+    }
+    } catch (error) {
+        console.error("Error details:", error);
+        res.status(500).json({ message: "An error occurred while processing your request", error: error.message });
+      }
+};
+
+//Logout users
+exports.logoutUser = async (req, res) => {
+    try {
+        if (!req.body.userId) {
+            return res.status(400).json({ message: 'User ID is required' });
+        }
+
+
+        res.status(200).json({ message: 'User logged out successfully' });
+    } catch (error) {
+        // Log the error for debugging
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred during logout' });
     }
 };
 exports.sendEmail = async (email, subject, text) => {
@@ -76,8 +105,8 @@ exports.sendEmail = async (email, subject, text) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail', // use 'gmail' or any other service you prefer
             auth: {
-                user: process.env.EMAIL_USERNAME, // your email username
-                pass: process.env.EMAIL_PASSWORD, // your email password
+                user: process.env.EMAIL_USER, // your email username
+                pass: process.env.EMAIL_PASS, // your email password
             },
         });
 
@@ -89,21 +118,31 @@ exports.sendEmail = async (email, subject, text) => {
         });
 
         console.log('Email sent successfully');
+        return { success: true }; // Indicate success
     } catch (error) {
         console.log(`Error: ${error}`);
+        return { success: false, error: error }; // Indicate failure 
     }
 };
 //Reset Password
 exports.resetPassword = async (req, res) => {
     const { email } = req.body;
 
-    try {
-        const user = await User.findOne({ email });
+    try {                  
+        const user = await User.findOne({ email: req.body.email });
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+            const token = generateToken(user); // Generate a token for the password reset link
+            const emailBody = `Please use the following link to reset your password: https://yourapp.com/reset-password?token=${token}`;
 
+            const emailResult = await exports.sendEmail(user.email, 'Password Reset Request', emailBody);
+            if (!emailResult.success) {
+                         console.log(`Failed to send email: ${emailResult.error}`);
+                return res.status(500).json({ message: 'Failed to send password reset email. Please try again later.' });
+            }
+        
         // Generate a unique password reset token and save it in the database
         const resetToken = crypto.randomBytes(20).toString('hex');
         const resetExpires = Date.now() + 3600000; // 1 hour from now
@@ -113,30 +152,18 @@ exports.resetPassword = async (req, res) => {
 
         await user.save();
 
-        // Send an email to the user with a password reset link containing the token
-        const resetUrl = `http://yourwebsite.com/reset-password?token=${resetToken}`;
-
-        await sendEmail(
-            user.email,
-            'Password Reset Request',
-            `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\nPlease click on the following link, 
-            or paste this into your browser to complete the process within one hour of receiving it:\n\n${resetUrl}\n\n
-            If you did not request this, please ignore this email and your password will remain unchanged.\n`
-        );
-        // Send an email to the user with a password reset link containing the token
 
         res.status(200).json({ message: 'Password reset instructions sent to your email' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Server Error' });
     }
 };
 //Change Password
 exports.changePassword = async (req, res) => {
-    const { userId, oldPassword, newPassword } = req.body;
-
     try {
         const { userId, oldPassword, newPassword } = req.body;
-
+        const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -146,8 +173,9 @@ exports.changePassword = async (req, res) => {
         if (!isPasswordMatch) {
             return res.status(400).json({ error: 'Invalid old password' });
         }
+        const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-        user.password = newPassword;
+        user.password = hashedPassword;
         await user.save();
 
         res.status(200).json({ message: 'Password changed successfully' });
@@ -186,8 +214,8 @@ exports.forgotPassword = async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'Gmail',
             auth: {
-                user: 'your-email@gmail.com',
-                pass: 'your-password',
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
             },
         });
 
@@ -208,63 +236,7 @@ exports.forgotPassword = async (req, res) => {
     }
 };
 
-//Login Users
-exports.loginUser = async (req, res) => {
-    try {
-        const { email, password } = req.body;
 
-        // Validate inputs
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
-        }
-
-        // Find the user by email
-        const user = await User.findOne({ email });
-
-        // Check if user exists
-        if (!user) {
-            return res.status(401).json({ error: 'User not found' });
-        }
-
-        // Validate password
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return res.status(401).json({ error: 'Invalid password' });
-        }
-
-        // Generate and send JWT token
-        const token = generateToken(user._id); // assuming user._id exists
-        res.status(200).json({ token });
-    } catch (error) {
-        res.status(500).json({ error: 'Server error' });
-    }
-};
-
-//Logout users
-exports.logoutUser = async (req, res) => {
-    try {
-        if (!req.body.userId) {
-            return res.status(400).json({ message: 'User ID is required' });
-        }
-
-        // Add a check to see if user is already logged out
-        if (!req.cookies.jwt) {
-            return res.status(400).json({ message: 'User is already logged out' });
-        }
-
-        // Clear the JWT cookie
-        res.clearCookie('jwt');
-
-        // If using sessions, destroy the session here
-        // req.session.destroy();
-
-        res.status(200).json({ message: 'User logged out successfully' });
-    } catch (error) {
-        // Log the error for debugging
-        console.error(error);
-        res.status(500).json({ message: 'An error occurred during logout' });
-    }
-};
 //Get single Users 
 exports.getUserById = async (req, res) => {
     const userId = req.params.id;
